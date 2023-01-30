@@ -1,0 +1,809 @@
+﻿<!DOCTYPE html>
+<link rel="icon" type="image/png" href="./BP Appearance/favicon.ico">
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <meta http-equiv="X-UA-Compatible">
+  <title>BookPageant</title>
+  <link rel="stylesheet" type="text/css" href="./BP Appearance/huebee.min.css" media="screen">
+  <link rel="stylesheet" type="text/css" href="./BP Appearance/leaflet.css">  
+  <link rel="stylesheet" type="text/css" href="./BP Appearance/BookPageant.css">  
+</head>
+
+<div id="TopRibbon" class="TopRibbon">
+  <div id = "BPlogoAndLibraryName" class="BPlogoAndLibraryName"><img class="Logo" src="./BP Appearance/BP Icon.png" alt="NotFound"></div>
+  <button id="OpenMap" class="OpenMap" onclick="OpenMap()" title='Display Geographic Data'><img class='OpenMapButtonImage' src='BP Appearance/world.png' alt='Some png'></button>      
+
+  <!--display: time/alphabet -->
+  <div id="DisplaySettings" class="DisplaySettings">
+    <!-- csv headers for time/alphabet -->
+    <div id="DateSortHeader" class ="DateSortHeader"></div>
+    <button id="ChooseHeaderForDateSorting" class="ChooseHeaderForDateSorting" onclick="ChooseHeaderForDateSorting()" title='Choose time data for Chronologically Order'><img class='ButtonImageHeader' src='BP Appearance/TimeData.png' alt='Some png'></button>
+    <button id="ProcessDataChronologically" class="ProcessDataChronologically" onclick="ProcessDataChronologically()" title='Display Items in Chronological Order'><img class='ButtonImageChronOrder' src='BP Appearance/ChronOrder.png' alt='Some png'></button>
+    <div id="AlphaSortHeader" class ="AlphaSortHeader"></div>    
+    <button id="ChooseHeaderForAlphaSorting" class="ChooseHeaderForAlphaSorting" onclick="ChooseHeaderForAlphaSorting()" title ='Choose alpha data for Alphabetically Order'><img class='ButtonImageHeader' src='BP Appearance/AlphaData.png' alt='Some png'></button>        
+    <button id="ProcessDataAlphabetically" class="ProcessDataAlphabetically" onclick="ProcessDataAlphabetically()" title ='Display Items in Alphabetical Order'><img class='ButtonImageAlphaOrder' src='BP Appearance/A to Z.png' alt='Some png'></button>
+  </div>
+
+  <!-- slider for year span  -->
+  <input id="ScaleSlider" class="slider" type="range" min="0" max="1" value="0" oninput=ScaleOfYears(this.value) step="0.1" title="Set Span of Years in Window">
+  <div class="SliderLabel">Span of Years in View</div>
+  <!-- slider for alphabet span  -->
+  <input id="AlphaSlider" class="AlphaSlider" type="range" min="0" max="1" value="0" oninput=ScaleOfAlphabet(this.value) step="0.1" title="Set Span of Alphabet in Window">
+  <div class="AlphaSliderLabel">Span of Alphabet in View</div>
+
+  <div id="ValueYearsSpan" class="YearSpanValue"> 0 Years</div>
+  <div id="ValueAlphaSpan" class="AlphaSpanValue">0 Letters</div>
+
+  <button type=button id="Anchor" class="Anchor" title='Indicate BookPageant Home Directory' onclick="GetHandleToBookPageantDirectory()"><img class='AnchorImage' src='BP Appearance/Anchor.png' alt='Some png'></button>
+
+  <div id="FilesAndFunctions" class="FilesAndFunctions">
+    <button id="OpenDropDownMenu" type=button class="OpenDropDownMenu" onclick="OpenDropDownMenu()">Files & Functions</button>
+    <div id = "DropDownMenuContent" class="DropDownMenuContent">
+         <button type=button id="openBookPageantFileButton" class="openBookPageantFileButton" title="Open a BookPageant File" onclick="openBookPageantFile()">Open a BookPageant File <img class='FileTypeIcon' src='./BP Appearance/BP Icon.png' alt='Some png'></button>
+         <button type=button id="ParseCSVFileButton" class="ParseCSVFileButton" title="Open a BP CSV File" onclick="ChooseDataFile()">Open a BP CSV File <img class='FileTypeIcon' src='BP Appearance/CSVFile.png' alt='Some png'></button>       
+         <button type=button id="CheckCSVButton" class="CheckCSVButton" title="Open a CSV file" onclick="CSVspreadsheet()">Edit a CSV spreadsheet <img class='FileTypeIcon' src='BP Appearance/CheckCSVFile.png' alt='Some png'></button>
+         <button type=button id="MapCSVtoBPButton" class="MapCSVtoBPButton" title="Map CSV file headers" onclick="ChooseCSVtoBPMappingFile()">Map CSV File Data <img class='FileTypeIcon' src='BP Appearance/Database Interconnection.png' alt='Some png'></button>
+         <button type=button id="OpenCompressImagesButton" class="OpenCompressImagesButton" title="Process images" onclick="OpenCompressImages()">Image Processing <img class='FileTypeIcon' src='./BP Appearance/ImageChecking3.png' alt='Some png'></button>       
+         <button type=button id="MakeBookPageant&ImagesFileButton" class="MakeBookPageantFileButton" title="Make a BookPageant file" onclick="MakeBookPageantFileWithImages()">Make a BookPageant File<img class='FileTypeIcon' src='BP Appearance/BP Icon.png' alt='Some png'></button>
+         <button type=button id="ComposefromBookPageantButton" class="ComposefromBookPageantButton" title="Open a PDF composition" onclick="Compose(event)">Compose PDF <img class='ComposefromBookPageantButtonImage' src='BP Appearance/BPCompose.png' alt='Some png'></button>
+         <button type=button disabled id="MakeDOCfromBookPageantButton" class="MakeDOCfromBookPageantButton" title="Make a PDF from a BookPageant file" onclick="PDFofLibrary()">Make PDF of Library<img class='MakeDOCfromBookPageantButtonImage' src='BP Appearance/BPtoPDF.png' alt='Some png'></button>
+         <button type=button id=" se" class="CloseButton" onclick="Close()">Close <img class='CloseButtonImage' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+  </div>
+</div>  
+
+<!-- Progress -->
+<div id = "BlinkingLoading"  class="BlinkingLoading">Decompressing BookPageant File</div>
+<div id = "CircleProgressDiv" class="CircleProgressDiv" ></div>
+  <!--  -->
+<body class="Body" onload="InitializeOnOpening()">
+  <div id="TimeLineMarker" class="TimeLineMarker" onscroll="SyncScroll('TimeLineMarker')"></div>
+  <!-- main display window -->
+  <!-- the class name "dragscoll" is the required name for the js routine that provides mouse drag scroling. -->
+  <!-- the 'nochilddrag' attribute leaves inside the timeline entries free for mouse; that is, no mouse dragging from inside a timeline entry. -->
+  <div id="MainTimeline" class="MainTimeline dragscroll" nochilddrag; onscroll="SyncScroll('MainTimeline')">
+    <!-- time line element are generated and inserted here by JS from data parsed from CSV file -->
+  </div>
+
+  <!-- spreadsheet appears in/over the main display window-->
+  <div id="CSVspreadsheet" class="CSVspreadsheet">
+    <div id = "CSVspreadsheetControls" class = "CSVspreadsheetControls">
+      <button type=button disabled id ="CheckSpreadsheetButton" class="CheckSpreadsheetButton" onclick="CheckCSVFile()" title='Check CSV File'><img class='ActiveButtonImages' src='BP Appearance/CheckCSVFile.png' alt='Some png'></button>      
+      <button type=button          id ="CheckImagesButton" class="CheckImagesButton" disabled title="Check for Presence of Images" onclick="CheckAllImageFiles()"><img class='ActiveButtonImages' src='BP Appearance/ImageChecking3.png' alt='Some png'></button>
+      <button type=button disabled id ="SaveSpreadsheetCheckingButton" class="SaveSpreadsheetCheckingButton" onclick="SaveCSVFileAnalysis()" title='Download analysis report'><img class='ActiveButtonImages' src='BP Appearance/DownloadReport.png' alt='Some png'></button>      
+      <button class="SaveCSVFileDataViewingButton" onclick="SaveCSVfile()" title='Save CSV file'><img class='ActiveButtonImages' src='BP Appearance/DownloadCSVFile.png' alt='Some png'></button>
+      <button class="HelpCSVFileCheckingButton" onclick="OpenHelp('10.0')" title='CSV checking help'><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>
+      <button class="CloseCSVspreadsheetButton" onclick="CloseCSVspreadsheet()" title='Close the Spreadsheet'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    <div id = "CSVspreadsheetDisplay" class = "CSVspreadsheetDisplay"></div>
+  </div>
+
+<!-- map appears in/over the main display window-->
+  <div id="Map" class="Map">
+    <div id = "MapControls" class = "MapControls">
+      <div id="NameOfLocationData" class="NameOfLocationData"></div>
+      <button class="MapBackgroundButton" onclick="CycleTrhoughMapBackgrounds()" title='Set map background'><img class='ActiveButtonImages' src='BP Appearance/CityMap.png' alt='Some png'></button>
+      <button class="GoogleEarthButton" onclick="MakeGoogleEarthFile()" title='Make a Google Earth file'><img class='ActiveButtonImages' src='BP Appearance/GoogleEarth.png' alt='Some png'></button>
+      <button class="CloseMapButton" onclick="CloseMap()" title='Close the Map'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    <div id = "MapDisplay" class = "MapDisplay"></div>
+  </div>
+
+  <!-- General Settings -->
+  <div id="GeneralSettings" class="GeneralSettings">
+    <div id = "GeneralSettingsControls" class="GeneralSettingsControls">
+      <div id ="GeneralSettingsDrag" title ='Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <div id = "GeneralSettingsTitle" class = "GeneralSettingsTitle">BookPageant Settings</div>
+      <button class="CloseGeneralSettingsButton" onclick="CloseGeneralSettings()" title="Close GeneralSettings"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    <div id="GeneralSettingsContent" class="GeneralSettingsContent">
+      <div class="SettingsSectionTitle"><strong><center> 🙜━━━━━━━━━━━( General )━━━━━━━━━━━🙞</center></strong>
+        <div id="GlobalSettings" class="GlobalSettings">
+          <div id="SystemFontContainer", class="SystemFontContainer"><strong>Font</strong>
+            <div id="SystemFont", class="SystemFont">
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont1" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(1) >
+                <div style='font-family: Times-Roman;'>Times Roman</div>
+              </div>
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont2" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(2) >
+                <div style='font-family: Scala;'>Scala</div>                
+              </div>                
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont3" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(3) >
+                <div style='font-family: Helvetica; '>Helvetica</div>                
+              </div>                
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont4" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(4) >
+                <div style='font-family: Centaur;'>Centaur</div>                
+              </div>                
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont5" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(5) >
+                <div style='font-family: Cambria;'>Cambria</div>                
+              </div>                
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont6" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(6) >
+                <div style='font-family: BookmanOldStyle;'>Bookman Old Style</div>                
+              </div>                
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont7" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(7) >
+                <div style='font-family: Baskerville;'>Baskerville</div>                
+              </div>                
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont8" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(8) >
+                <div style='font-family: Arial;'>Arial</div>                
+              </div>
+              <div id="FontChoice" class="FontChoice">
+                <input id="RadioButtonSystemFont9" class="RadioButtonSystemFont1" name='FontRadio' type="radio" onclick=SetSystemFont(9) >
+                <div style='font-family: Garamond;'>Garamond</div>                
+              </div>                              
+            </div>
+          </div>
+
+          <div id="ColorSchemeLabel" class="ColorSchemeLabel"><strong>Color Scheme</strong>
+            <div class="ColorSchemeChoice">
+
+            <label  class="RadioButtonForColors" for="RadioButtonScreenColor1"><strong>Slate</strong></label>
+            <input id="RadioButtonScreenColor1" type="radio" name="ColorSchemeChoice" style="padding: 0 0 0 0" onclick=SetColorScheme("1")>
+            <div style="color: rgb(255, 255, 255)">&#9632</div>
+            <div style="color: rgb(211, 211, 211)">&#9632</div>
+            <div style="color: rgb(175, 175, 175)">&#9632</div>
+            <div style="color: rgb(139, 139, 139)">&#9632</div>
+            <div style="color: rgb(110, 110, 100)">&#9632</div>
+            <div style="color: rgb(80, 80, 80)">&#9632</div>
+            <div style="color: rgb(39, 39, 39)">&#9632</div>
+            <div style="color: rgb(10, 10, 10)">&#9632</div>
+
+            <label class="RadioButtonForColors" for="RadioButtonScreenColor2"><strong>Frost</strong></label>
+            <input id="RadioButtonScreenColor2"  type="radio" name="ColorSchemeChoice" style="padding: 0 0 0 0" onclick=SetColorScheme('2')> 
+            <!-- <div style="color: rgba(253, 236, 238, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(215, 188, 200, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(219, 80, 74, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(120, 192, 224, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(68, 157, 209, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(57, 67, 183, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(21, 5, 120, 1)">&#9632</div> -->
+            <!-- <div style="color: rgba(14, 14, 82, 1)">&#9632</div> -->
+
+            <div style="color: rgba(247, 249, 249, 1)">&#9632</div>
+            <div style="color: rgba(219, 233, 231, 1)">&#9632</div>
+            <div style="color: rgba(190, 216, 212, 1)">&#9632</div>
+            <div style="color: rgba(120, 213, 215, 1)">&#9632</div>
+            <div style="color: rgba(99, 210, 255, 1)">&#9632</div>
+            <div style="color: rgba(66, 170, 225, 1)">&#9632</div>
+            <div style="color: rgba(49, 150, 210, 1)">&#9632</div>
+            <div style="color: rgba(32, 129, 195, 1)">&#9632</div>
+
+
+            <label class="RadioButtonForColors" for="RadioButtonScreenColor3"><strong>Leaves</strong></label>
+            <input id="RadioButtonScreenColor3"  type="radio" name="ColorSchemeChoice" style="padding: 0 0px 0 0" onclick=SetColorScheme('3')> 
+            <div style="color: rgba(238, 241, 239, 1)">&#9632</div>
+            <div style="color: rgba(250, 255, 253, 1)">&#9632</div>
+            <div style="color: rgba(240, 243, 189, 1)">&#9632</div>
+            <div style="color: rgb(41, 215, 148)">&#9632</div>
+            <div style="color: rgba(2, 195, 154, 1)">&#9632</div>
+            <div style="color: rgba(0, 168, 150, 1)"   >&#9632</div>
+            <div style="color: rgb(2, 144, 144)"   >&#9632</div>
+            <div style="color: rgba(5, 102, 141, 1)"   >&#9632</div>
+            
+            <label class="RadioButtonForColors" for="RadioButtonScreenColor4"><strong>Autumn</strong></label>
+            <input id="RadioButtonScreenColor4"  type="radio" name="ColorSchemeChoice" style="padding: 0 0px 0 0" onclick=SetColorScheme('4')> 
+            <div style="color: rgba(187, 216, 179, 1)">&#9632</div>
+            <div style="color: rgba(243, 182, 31, 1)">&#9632</div>
+            <div style="color: rgba(162, 159, 21, 1)">&#9632</div>
+            <div style="color: rgba(41, 63, 20, 1)">&#9632</div>
+            <div style="color: rgba(40, 89, 67, 1)">&#9632</div>
+            <div style="color: rgba(84, 106, 118, 1)">&#9632</div>
+            <div style="color: rgba(81, 13, 10, 1)">&#9632</div>
+            <div style="color: rgba(25, 17, 2, 1)">&#9632</div>
+            </div>
+          </div>          
+
+          <div class="BorderRoundness">
+            <div id="SettingsFrameRoundnessSliderLabel" class="SettingsFrameRoundnessSliderLabel"><strong>Border Roundness</strong></div>
+            <img class='SettingsIcon' src='BP Appearance/rectangle.png' alt='Some png'>  
+            <input id="SettingsFrameRoundness" class="SettingsFrameRoundnessSlider" type="range" min="0" max="1.5" value="0" oninput=FrameRoundness(this.value) step=".05">
+            <img class='SettingsIcon' src='BP Appearance/rounded-rectangle.png' alt='Some png'>
+          </div>
+
+        </div>
+      </div>
+      <div class="SettingsSectionTitle"><strong><center> 🙜━━━━━━━━━━━( Background )━━━━━━━━━━━🙞 </center></strong>
+        <div id="BackgroundType" class="BackgroundType">
+          <div id="SettingsBackgroundTypeLabel" class="SettingsBackgroundTypeLabel"><strong>Background type</strong>
+            <div style="padding: 0 0 0 1.5vw;"></div>
+            <input id="RadioButtonSolidBackground"  class="RadioButtonImageBackgroundLabel" type="radio" name="TimelineBackgroundChoice" value="Solid"  onclick=TimelineBackgroundType('Solid')> 
+            <label for="RadioButtonSolidBackground"><strong>Solid Color</strong></label>
+            <button id="BackgroundColorPicker" class="BackgroundColorPicker" onclick="OpenBackgroundColorPicker()" title="Pick a Background Color" disabled><img class='imgpalette' src='BP Appearance/color-palette.png' alt='Some png'></button>
+            <div style="padding: 0 0 0 1.5vw;"></div>              
+            <input id="RadioButtonImageBackground" class="RadioButtonImageBackgroundLabel" type="radio" name="TimelineBackgroundChoice" value="Image" onclick=TimelineBackgroundType("Image")>
+            <label for="RadioButtonImageBackground" ><strong>Image</strong></label>
+            <button id="BackgroundImagePicker" class="BackgroundImagePicker" onclick="OpenImagePicker()" title="Pick an Background Image" disabled><img class='img' src='BP Appearance/ImageFile.png' alt='Some png'></button>
+            <input type="file" accept="image/*" id="GetBackgroundImageFile" class="GetBackgroundImageFile" onchange="ImportBackgroundImageFile(this.files)" onclick="this.value=null"multiple name="ImageFiles" style="display: none;">
+          </div>            
+        </div>
+        <div id="BackgroundSlider" class="BackgroundSlider">
+          <div id="SettingsBackgroundImageBrightnessSliderLabel" class="SettingsBackgroundImageBrightnessSliderLabel"><strong>Background Image Brightness</strong></div>
+          <img class='SettingsIcon' src='BP Appearance/Bright.png' alt='Some png'>  
+          <input id="SettingsBackgroundImageBrightnessSlider" class="SettingsBackgroundImageBrightnessSlider" type="range" min="0" max="1" value="0" oninput=TimelineBackgroundImageBrightness(this.value) step=".05">
+          <img class='SettingsIcon' src='BP Appearance/Dark.png' alt='Some png'>
+        </div>
+      </div>
+      <div class="SettingsSectionTitle"><strong><center> 🙜━━━━━━━━━━━( Summary Display )━━━━━━━━━━━🙞</center></strong><br>
+        <div id="SummaryComponents" class="SummaryComponents">
+          <label class="SummaryComponentLabel" for="SummaryComponent1"><strong>Listing Number</strong></label>  <input type="checkbox" checked id="SummaryComponent1" name="SummaryComponent1" onclick="ToggleSummaryComponent('Number',this.checked)" value="Listing Number">
+          <label class="SummaryComponentLabel" for="SummaryComponent2"><strong>Title</strong></label>           <input type="checkbox" checked id="SummaryComponent2" name="SummaryComponent2" onclick="ToggleSummaryComponent('BriefBookTitle',this.checked)" value="Title">
+          <label class="SummaryComponentLabel" for="SummaryComponent3"><strong>Author</strong></label>          <input type="checkbox" checked id="SummaryComponent3" name="SummaryComponent3" onclick="ToggleSummaryComponent('Author',this.checked)" value="Author">
+          <label class="SummaryComponentLabel" for="SummaryComponent4"><strong>Date</strong></label>            <input type="checkbox" checked id="SummaryComponent4" name="SummaryComponent4" onclick="ToggleSummaryComponent('PublicationYear',this.checked)" value="Date">
+          <label class="SummaryComponentLabel" for="SummaryComponent5"><strong>Brief Summary</strong></label>   <input type="checkbox" checked id="SummaryComponent5" name="SummaryComponent5" onclick="ToggleSummaryComponent('BriefDescription',this.checked)" value="BriefSummary">
+        </div>
+        <div id="SummaryDataBackground" class="SummaryDataBackground">
+          <label class="SummaryComponentLabel" for="SummaryDataColorPicker"><strong>Background Color</strong></label> 
+          <div id="SummaryDataColorPickerPlace" class="SummaryDataColorPickerPlace" display: none></div>
+          <button id="SummaryDataColorPicker" class="SummaryDataColorPicker" onclick="OpenSummaryBackgroundColorPicker()" title="Pick a Background Color"><img class='imgpalette' src='BP Appearance/color-palette.png' alt='Some png'></button>
+          <div id="SummaryDataBackgroundTransparencySliderLabel" class="SummaryDataBackgroundTransparencySliderLabel"><strong>Transparency</strong></div>
+          <img class='SettingsIcon' src='BP Appearance/Bright.png' alt='Some png'>  
+          <input id="SummaryDataBackgroundTransparencySlider" class="SummaryDataBackgroundTransparencySlider" type="range" min="0" max="1" value="0" oninput=SummaryDataBackgroundTransparency(this.value) step=".05">
+          <img class='SettingsIcon' src='BP Appearance/Dark.png' alt='Some png'>
+        </div>  
+        <div id="SummaryDataText" class="SummaryDataBackground">
+          <label class="SummaryComponentLabel" for="SummaryDataColorPicker"><strong>Text Color</strong></label>
+          <div id="SummaryDataTextColorPickerPlace" class="SummaryDataTextColorPickerPlace" display: none></div>
+          <button id="SummaryDataColorPicker" class="SummaryDataColorPicker" onclick="OpenSummaryTextColorPicker()" title="Pick a Text Color"><img class='imgpalette' src='BP Appearance/color-palette.png' alt='Some png'></button>
+        </div> 
+        <div id="SummaryDataSize", class="SummaryDataSize">
+          <label class="SummaryDataSizeLabel" for="SummaryDataSizeSlider"><strong>Relative Element Size</strong></label>
+          <img class='SettingsIconSmall' src='BP Appearance/rectangle.png' alt='Some png'>              
+          <input id="SummaryDataSizeSlider" class="SummaryDataSizeSlider" type="range" min="0.8" max="2" value="1.0" oninput=SummaryDataSize(this.value) step=".05">
+          <img class='SettingsIconLarge' src='BP Appearance/rectangle.png' alt='Some png'>
+          <div id="ShowSizeSliderValue" class="ShowSizeSliderValue">1.0</div>
+        </div>
+      </div>
+      <div class="SettingsSectionTitle"><strong><center> 🙜━━━━━━━━━━━( Full Data Display )━━━━━━━━━━━🙞</center></strong><br>
+        <div id="FullDataComponents" class="FullDataComponents">
+          <label class="FullDataComponentLabel" for="FullDataComponent1"><strong>BibliographicDetails</strong></label>  <input type="checkbox" checked id="FullDataComponent1" name="FullDataComponent1" onclick="ToggleFullDataComponent('BibliographicDetails',this.checked)" value="BibliographicDetails">
+          <label class="FullDataComponentLabel" for="FullDataComponent2"><strong>Descriptions</strong></label>          <input type="checkbox" checked id="FullDataComponent2" name="FullDataComponent2" onclick="ToggleFullDataComponent('Descriptions',this.checked)" value="Descriptions">
+          <label class="FullDataComponentLabel" for="FullDataComponent3"><strong>References</strong></label>            <input type="checkbox" checked id="FullDataComponent3" name="FullDataComponent3" onclick="ToggleFullDataComponent('References',this.checked)" value="References">
+          <label class="FullDataComponentLabel" for="FullDataComponent4"><strong>Links</strong></label>                 <input type="checkbox" checked id="FullDataComponent4" name="FullDataComponent4" onclick="ToggleFullDataComponent('Links',this.checked)" value="Links">
+          <!-- <label class="FullDataComponentLabel" for="SetFullComponents"><strong>Set</strong></label>                    <button id="SetFullComponents" class = "SetFullComponentsButton" title="Set Full Components" onclick=SetFullComponents()><img class='SetSummaryComponentsImage' src='BP Appearance/chevron-circle-down-solid.png' alt='Some png'></button>           -->
+        </div>
+        <div id="FullDataDisplay" class="FullDataDisplay">
+          <label class="SummaryComponentLabel" for="FullDataColorPicker"><strong>Background Color</strong></label> 
+          <div id="FullDataColorPickerPlace" class="FullDataColorPickerPlace" display: none></div>
+          <button id="FullDataColorPicker" class="FullDataColorPicker" onclick="OpenFullDataBackgroundColorPicker()" title="Pick a Background Color"><img class='imgpalette' src='BP Appearance/color-palette.png' alt='Some png'></button>
+        </div>
+      </div>
+      <button id="ClearStorage" class="ClearStorage" onclick="ClearStorage()" title="Clear Storage"><img class='img' src='BP Appearance/ClearStorage.png' alt='Some png'></button>      
+    </div>
+    <div id="Version">Version 1.05</div>
+  </div>
+  <!--  -->
+  <!-- CompressImages('Process') -->
+  <div id="ImageProcessingWindow" class="ImageProcessingWindow">
+    <div id = "ImageProcessingControls" class="ImageProcessingControls">
+      <div id = "LeftImageProcessingControls" class = "LeftImageProcessingControls">
+        <div id ="ImageProcessingWindowDrag" title='Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+        <div id = "ImageProcessingTitle" class="ImageProcessingTitle">Image Processing</div>
+      </div>
+      <div id = "RightImageProcessingControls" class = "RightImageProcessingControls">
+        <button id = "PreviewCompressImagesButton" class="PreviewCompressImagesButton" disabled title="Preview Compress Images" onclick="PreviewCompressedImages()"><img class='ActiveButtonImages' src='BP Appearance/Preview3.png' alt='Some png'></button>
+        <button id = "CompressImagesInCSVButton" class="CompressImagesInCSVButton" title="Compress Images Listed in a CSV File" onclick="CompressImagesInCSV()"><img class='ActiveButtonImages' src='BP Appearance/CSVFile.png' alt='Some png'></button>
+        <button id = "CompressAllImagesButton" class="CompressAllImagesButton" title="Compress All Images in a Folder" onclick="CompressAllImages()"><img class='ActiveButtonImages' src='BP Appearance/CompressFolder.png' alt='Some png'></button>
+        <button id = "CompressImagesButton" class="CompressImagesButton" title="Compress Some Images in a Folder" onclick="CompressSomeImages()"><img class='ActiveButtonImages' src='BP Appearance/Compress.png' alt='Some png'></button>
+        <input type="number" min="0" max="0.975" step="0.05" id="ImageCompressionLevel" class="ImageCompressionLevel" oninput="SetImageCompressionLevel(this.value)" title = 'Set level for image compression' >
+        <button id = "StopCompressImagesButton" class="StopCompressImagesButton" title="Pause Compressing Images" onclick="PauseProcessingImageFiles()"><img id="StopCompressImagesButtonImage" class='ActiveButtonImages' src='BP Appearance/Pause.png' alt='Some png'></button>
+        <button id = "CancelCompressImagesButton" class="CancelCompressImagesButton" title="Stop Compressing Images" onclick="StopProcessingImageFiles()"><img class='ActiveButtonImages' src='BP Appearance/Cancel.png' alt='Some png'></button>
+        <button id = "SaveImageProcessingReportButton" class="SaveImageProcessingReportButton" onclick="SaveImageProcessingAnalysis()" disabled title='Download image analysis report'><img class='ActiveButtonImages' src='BP Appearance/DownloadReport.png' alt='Some png'></button>
+        <button id = "ZIPImageProcessingButton" class="ZIPImageProcessingButton" onclick ="DownloadZipOfCompressedImages()" disabled title='ZIP compressed images'><img class='ActiveButtonImages' src='BP Appearance/download-zip.png' alt='Some png'></button>
+        <button id = "SaveImageProcessingButton" class="SaveImageProcessingButton" onclick ="SaveImageProcessing()" disabled title='Save compressed images file'><img class='ActiveButtonImages' src='BP Appearance/SaveImageFile.png' alt='Some png'></button>
+        <button id = "HelpImageProcessingButton" class="HelpImageProcessingButton" onclick="OpenHelp('11.0')" title='Image processing help'><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>
+        <button id = "CloseImageProcessingButton" class="CloseImageProcessingButton" title="Close" onclick="CloseCompressImages()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+      </div> 
+      <div id = "ImageProcessingProgress" class="ImageProcessingProgress" ></div>      
+    </div>
+    <img id = "PreviewImage" class = "PreviewImage">
+    <div id="PreviewImageLabeling" class="PreviewImageLabeling">
+      <div id="PreviewImageFileName" class="PreviewImageFileName"></div>
+      <div id="ImageCompression" class="ImageCompression">Compression Data</div>
+      <div id="PreviewImageGallery" class="PreviewImageGallery">
+        <button id="PrevPreviewImageButton" class="PrevPreviewImageButton" onclick="NextPreviewImage('-')" title = 'Previous image'><img class='ActiveButtonImages' src='BP Appearance/chevron-circle-left-solid.png' alt='Some png'></button>
+        <div id="CurrentPreviewImageNumber" class="CurrentPreviewImageNumber"></div>
+        <button id="NextPreviewImageButton" class="PrevPreviewImageButton" onclick="NextPreviewImage('+')" title = 'Next image'><img class='ActiveButtonImages' src='BP Appearance/chevron-circle-right-solid.png' alt='Some png'></button>      
+      </div>
+    </div>
+    <button id = "ClosePreviewImagesButton" class="ClosePreviewImagesButton" title="Close" onclick="ClosePreviewImages()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    <div id="ImageProcessingContainer" class="ImageProcessingContainer">
+    </div>
+  </div>  
+  <!--  -->
+  <!-- expanded data element -->
+  <div id="ExpandedElement" class="ExpandedElementData">
+    <div id="ExpandedElementControls" class="ExpandedElementControls">
+      <button class="MakePDFOfExpandedData" onclick="MakePDFOfExpandedData()" title='Make a PDF of this data'><img class='ActiveButtonImages' src='BP Appearance/PDFFile.png' alt='Some png'></button>
+      <button class="CloseElementButton" onclick="CloseElementDetailData()" title = 'Close'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    <div id="ExpandedElementContent" class="ExpandedElementContent">
+<!-- 36 -->
+     <img id="BP_Image1" class="BP_Image1" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">  <!-- alt="No Image Available" -->
+     <div id="BP_ImageCaption" class="BP_ImageCaption"></div>     
+     <div id="ExpandedElementDataImageControl" class="ExpandedElementDataImageControl">
+      <button id="PrevImageButton" class="ImageControl" onclick="NextImageInExpandedData('-')" title = 'Previous image'><img class='ActiveButtonImages' src='BP Appearance/chevron-circle-left-solid.png' alt='Some png'></button>
+      <div id="CurrentImageNumber" class="ImageControl"></div>
+      <button id="NextImageButton" class="ImageControl" onclick="NextImageInExpandedData('+')" title = 'Next image'><img class='ActiveButtonImages' src='BP Appearance/chevron-circle-right-solid.png' alt='Some png'></button>      
+    </div>
+
+<!--  -->
+<!-- 43 -->
+      <div id="BP_Number_In_Catalogue" class="BP_Number_In_Catalogue"></div>  
+                 <div id="ExpandedDescriptionSeparator" class="ExpandedDescriptionSeparator">&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;&nbsp; &#773;</div>
+<!-- 15 -->
+      <div id="BP_Date Published" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 1 -->
+       <div id="BP_Author full name" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 2 -->
+       <div id="BP_Author last name first" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 3 -->
+       <div id="BP_Author AKA" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 4 -->
+       <div id="BP_Author Dates" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 17 -->
+      <div id="BP_Biographical Statement" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 5 -->
+       <div id="BP_Translator or Editor" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 6 -->
+       <div id="BP_Translator" class="BP_ExpandedDataHalfWidth"></div>
+<!-- 7 -->
+       <div id="BP_Editor" class="BP_ExpandedDataHalfWidth"></div>
+<!--  -->
+                 <div id="ExpandedDescriptionSeparatorBlank1" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 8 -->
+       <div id="BP_Short or Common Title" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+                 <div id="ExpandedDescriptionSeparatorBlank2" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 13 -->
+      <div id="BP_Title" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+                 <div id="ExpandedDescriptionSeparatorBlank3" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 14 -->
+      <div id="BP_Title English Translation" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!--  -->
+                 <div id="ExpandedDescriptionSeparatorBlank4" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 9 -->
+       <div id="BP_Brief Summary of the Work" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!--  -->
+                 <div id="ExpandedDescriptionSeparatorBlank5" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 18 -->
+      <div id="BP_Edition Number" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 19 -->
+      <div id="BP_First Edition Date" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 16 -->
+      <div id="BP_Date Range" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+  <!--  -->
+                 <div id="ExpandedDescriptionSeparatorBlank6" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 21 -->
+      <div id="BP_Publisher or Seller" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 22 -->
+      <div id="BP_Publication Place" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 23 -->
+      <div id="BP_Printer" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+      <div id="BP_Engraver" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+      <div id="BP_Binder" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 24 -->
+      <div id="BP_Multi-Volume Set" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 25 -->
+      <div id="BP_Nonce-volume" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 26 -->
+      <div id="BP_Collation/Pagination/Foliation" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 27 -->
+      <div id="BP_Collation" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 28 -->
+      <div id="BP_Pagination" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 29 -->
+      <div id="BP_Foliation" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 30 -->
+      <div id="BP_Plates" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 31 -->
+      <div id="BP_BibliographicNotes" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 32 -->
+      <div id="BP_Binding" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 33 -->
+      <div id="BP_Format and Size" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 34 -->
+      <div id="BP_Format" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 35 -->
+      <div id="BP_Size" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 20 -->
+      <div id="BP_Provenance" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+<!-- 44 -->
+      <div id="BP_Source" class="BP_ExpandedDataHalfWidthNoIndent"></div>
+                 <div id="BibliographySeparatorBlank" class="BibliographySeparatorBlank"><br></div>
+<!--  -->
+<!-- 10 -->
+      <div id="BP_Description_1" class="BP_ExpandedDataFullWidthTwoColumns"></div>
+                 <div id="ExpandedDescriptionSeparatorBlank7" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 11 -->
+      <div id="BP_Description_2" class="BP_ExpandedDataFullWidthTwoColumns"></div>
+                 <div id="ExpandedDescriptionSeparatorBlank8" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 12 -->
+      <div id="BP_Reference(s)" class="BP_ExpandedDataFullWidthOneColumn"></div>
+<!--  -->
+                 <div id="ExpandedDescriptionSeparatorBlank9" class="ExpandedDescriptionSeparatorBlank"><br></div>
+<!-- 42 -->
+      <div id="BP_Digital Copy link" class="BP_ExpandedDataFullWidthOneColumn"></div>
+<!-- 41 -->
+      <div id="BP_links" class="BP_ExpandedDataFullWidthOneColumn"></div>
+<!-- 45 -->
+      <div id="BP_Dust Jacket" class="BP_ExpandedDataFullWidthOneColumn"></div>
+<!-- 46 -->
+      <div id="BP_ISBN" class="BP_ExpandedDataFullWidthOneColumn"></div>
+      <div id="BP_Location" class="BP_ExpandedDataFullWidthOneColumn"></div>
+      <!--  -->
+    </div>
+  </div>
+  <!--  -->
+  <!-- bookmarks page  -->
+  <div id="BookmarkManagement" class="BookmarkManagement">
+    <div id="BookmarkControls" class="BookmarkControls">
+      <span id =BookmarkManagementDrag title='Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></span>
+      <span id="BookmarkTitle" class="BookmarkTitle">Bookmarks</span>
+      <div id="SaveHelpCloseBookmark" class="SaveHelpCloseBookmark">
+        <button class="SaveBookmarkListButton" onclick="SaveBookmarkList()" title='Download list of bookmarked items'><img class='ActiveButtonImages' src='BP Appearance/DownloadReport.png' alt='Some png'></button>
+        <button class="ClearAllBookmarksButton" onclick="ClearAllBookmarks()" title="Clear all bookmarks"><img class='ActiveButtonImages' src='BP Appearance/BinAll.png' alt='Some png'></button>
+        <button class="BookmarkHelpButton" onclick="OpenHelp('4.0')" title="Bookmark help"><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>      
+        <button class="CloseBookmarksButton" onclick="CloseBookmarks()" title ='Close bookmark window'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+      </div>  
+    </div>    
+    <div id="BookmarkContainer" class="BookmarkContainer"></div>
+  </div>
+  <!--  -->
+  <!-- serach page -->
+  <div id="SearchManagement" class="SearchManagement">
+    <div id="SearchControls" class="SearchControls">
+      <span id ="SearchManagementDrag" title='Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></span>
+      <span id="SearchTitle" class="SearchTitle">Search</span>
+      <div id="NumberOfSearchResults" class="NumberOfSearchResults">Found:</div>
+      <button class="BookmarkAllSearchHItsButton" onclick="BookmarkAllSearchHits()" title ='Bookmark all search hits'><img class='ActiveButtonImages' src='BP Appearance/BookmarkAll 2.png' alt='Some png'></button>
+      <button class="SaveSearchListButton" onclick="SaveSearchList()" title='Download search hits list'><img class='ActiveButtonImages' src='BP Appearance/DownloadReport.png' alt='Some png'></button>      
+      <button class="ClearAllSearchHItsButton" onclick="ClearAllSearchHits()" title='Clear all search hits'><img class='ActiveButtonImages' src='BP Appearance/BinAll.png' alt='Some png'></button>
+      <div id="SearchSaveHelpCloseSearch" class="SearchSaveHelpCloseSearch">
+        <button id="StartSearchButton" class="StartSearchButton NoPointEvents" disabled onclick="StartSearch()" title='Start Search'><img class='ActiveButtonImages' src='BP Appearance/magnifying-glass.png' alt='Some png'></button>        
+        <button class="ClearAllSearchFieldsButton" onclick="ClearAllSearchFields()" title='Clear all search fields'><img class='ActiveButtonImages' src='BP Appearance/BinAll.png' alt='Some png'></button>
+        <button class="SearchHelpButton" onclick="OpenHelp('5.0')" title="Search help"><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>      
+        <button class="CloseSearchManagementButton" onclick="CloseSearchManagement()" title='Close search'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+      </div>  
+    </div>
+    <div id="SearchResultsContainer" class="SearchResultsContainer"></div>
+    <!-- search fields -->
+    <div id="SearchFields" class="SearchFields">Search Fields</div>
+    <div id="SearchFieldsContainer" class="SearchFieldsContainer"></div>
+  </div>
+  <!--  -->
+  <!-- Filter  -->
+  <div id="FilterManagement" class="FilterManagement">
+    <div id="FilterControls" class="FilterControls">
+      <span id ="FilterManagementDrag" title = 'Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></span>
+      <span id="FilterTitle" class="FilterTitle">Filter</span>
+      <div id="FilterProgress" class="FilterProgress"></div>
+      <div id="NumberOfFilterResults" class="NumberOfFilterResults">Filter Fields</div>      
+      <div id="FileterButtonsContainer" class="FileterButtonsContainer">
+        <button id = "StartFilterButton" disabled class="StartFilterButton" onclick="StartFilter()" title='Filter items Displayed'><img class='ActiveButtonImages' src='BP Appearance/Filter.png' alt='Some png'></button>
+        <button id = "EndFilterButton" class="EndFilterButton" onclick="EndFilter()" title='UnFilter Items Displayed'><img class='ActiveButtonImages' src='BP Appearance/NoFilter.png' alt='Some png'></button>        
+        <button class="ClearAllFilterFieldsButton" onclick="ClearAllFilterFields()" title='Clear all filter fields'><img class='ActiveButtonImages' src='BP Appearance/BinAll.png' alt='Some png'></button>
+        <button class="FilterHelpButton" onclick='OpenHelp("6.0")' title="Filter help"><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>      
+        <button class="CloseFilterManagementButton" onclick="CloseFilterManagement()" title ='Close Filter'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    </div>
+    <div id="FilterResultsContainer" class="FilterResultsContainer"></div>
+    <!-- filter fields -->
+    <div id="FilterFields" class="FilterFields"></div>
+    <div id="FilterFieldsContainer" class="FilterFieldsContainer"></div>
+  </div>
+  
+  <!--  -->
+  <!-- Data headers for sorting  -->
+  <div id="DataHeaders" class="DataHeaders">
+    <div id = "DataHeadersControl" class= "DataHeadersControl">
+    <span id ="DataHeadersDrag" title = 'Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></span>  
+    <span>Data Fields for Sorting</span>    
+    <button class="CloseFilterManagementButton" onclick="CloseChooseHeaderForSorting()" title ='Close Data Headers'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>    
+    </div>
+    <div>
+      <span style="font-size:1.5vh">Note: For DATE sorting, items with only alpha data in the chosen field will NOT be displayed. For ALPHA sorting, items with only numeric data in the chosed field will NOT be displayed</span>
+    </div>
+    <div id="DataHeadersContainer" class="DataHeadersContainer"></div>    
+  </div>
+  
+  <!--  -->
+  <!-- General Help System -->
+  <div id ="Help" class="Help">
+      <div id = "HelpControls" class="HelpControls">
+        <div id ="HelpDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+        <div id = "HelpTitle" class = "HelpTitle">BookPageant Documentation</div>
+        <div id = "HelpToC" class = "HelpToC">Click on a section title</div>
+        <button class="CloseHelpButton" onclick="CloseHelp()" title="Close Documentation"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+      </div>
+      <div id="HelpDocWindow" class="HelpDocWindow">      
+        <iframe id = 'HelpIframe' class = "DocFrame" style= 'height: 100%; border: none' frameborder="0" onLoad="console.log('iFrame loaded');"></iframe>
+      </div>
+  </div>
+
+  <!--  -->
+  <!-- available search lists -->
+  <div id="AvailableSearchLists" class="AvailableSearchLists">
+    <div id="AvaiableSearchListsControl" class="AvaiableSearchListsControl">
+      <div id = "AvailableSearchListsDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <div id = "AvailableSearchListsTitle" class = "AvailableSearchListsTitle"></div>
+      <button id="CloseAvailableSearchLists" class="CloseAvailableSearchLists" onclick="CloseAvailableSearchLists()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>          
+    </div>    
+    <div id ="AvailableSearchListsContent" class = "AvailableSearchListsContent"></div>
+  </div>
+  <!--  -->
+  <!-- CSV file checking -->
+  <div id="CSVFileChecking" class="CSVFileChecking">
+    <div id = "CSVFileCheckingControls" class="CSVFileCheckingControls">
+      <div id ="CSVFileCheckingDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <!-- <button class="SaveCSVFileCheckingButton" onclick="SaveCSVFileAnalysis()" title='Download analysis report'><img class='img' src='BP Appearance/DownloadReport.png' alt='Some png'></button> -->
+      <!-- <button class="SaveCSVFileDataViewingButton" onclick="SaveCSVfile()" title='Save CSV file'><img class='img' src='BP Appearance/DownloadCSVFile.png' alt='Some png'></button>      <button class="HelpCSVFileCheckingButton" onclick="OpenHelp('CSV File Checking')" title='CSV checking help'><img class='img' src='BP Appearance/Help.png' alt='Some png'></button> -->
+      <button class="CloseCSVFileCheckingButton" onclick="CloseCSVFileCheckingResults()" title='Close CSV file checking results'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    <div id="CSVAnalysis" class="CSVAnalysis"></div>
+  </div>
+  <div id="AvailableCSVFieldElementHeaders" class="AvailableCSVFieldElementHeaders">
+    <div id="FieldElementsControls" class="FieldElementsControls">
+        <div id = "FieldElementsControlsGroup1" class = "FieldElementsControlsGroup1">
+          <div id = "AvailableCSVFieldElementHeadersDrag" class ="AvailableCSVFieldElementHeadersDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+          <div id = "CSVFieldElementHeaderList" class="CSVFieldElementHeaderList"></div>
+          <button id="CloseCSVFileHeadersButton" class="CloseCSVFileCheckingButton"  onclick="CloseCSVFileHeaders()" title='Close CSV file checking functions'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+        </div>
+        <div id = "FieldElementsControlsGroup2" class = "FieldElementsControlsGroup2">
+          <button id="ResetCSVHeaderChecking" class="CSVFieldElementHeaderReset" onclick="ResetCSVHeaderChecking()" title='Reset Header Choices'><img class='ActiveButtonImages' src='BP Appearance/Reset.png' alt='Some png'></button>
+          <button id="ContinueCSVFileCheckingButton" class="ContinueCSVFileCheckingButton" disabled onclick="FinishCheckCSVFile()" title='Finish CSV checking'><img class='ActiveButtonImages' src='BP Appearance/Check.png' alt='Some png'></button>
+      </div>
+    </div>      
+  </div>
+
+  <!--  -->
+  <!-- CSV file data viewing/editing -->
+  <div id="CSVFileDataViewing" class="CSVFileDataViewing">
+    <div id = "CSVFileDataViewingControls" class="CSVFileDataViewingControls">
+      <div id ="CSVFileDataViewingDrag" class = "CSVFileDataViewingDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <a>Edit CSV Data </a>
+      <button id="SaveChangesToCSVFileDataButton" class="SaveChangesToCSVFileDataButton" onclick="SaveChangesToCSVFileData()" title='Save changes made to data in the current cell'><img class='ActiveButtonImages' src='BP Appearance/Save.png' alt='Some png'></button>
+      <button id="PreviewImageCSVFileDataViewingButton" class="PreviewImageInCSVFileButton" disabled onclick="PreviewImageInCSVFile()" title='Preview image referenced in the current cell'><img class='ActiveButtonImages' src='BP Appearance/ImageFileHold.png' alt='Some png'></button>
+      <button id="StartCSVFileDataViewingButton" class="StartCSVFileDataViewingButton" onclick="ViewCSVFileData()" title='Check CSV file for required data'><img class='ActiveButtonImages' src='BP Appearance/CheckCSVFile.png' alt='Some png'></button>
+      <button class="ClearCSVFileDataViewingButton" onclick="ClearCSVFileData()" title='Clear CSV checking results'><img class='ActiveButtonImages' src='BP Appearance/Bin.png' alt='Some png'></button>
+      <button class="HelpCSVFileDataViewingButton" onclick="OpenHelp('10.2')" title='CSV data viewing help'><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>
+      <button class="CloseCSVFileDataViewingButton" onclick="CloseCSVFileDataViewing()" title='Close CSV file data viewing functions' style = "margin-right: 10px;"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+      <button id="CloseDisplayCSVImagePreviewButton" class="CloseDisplayCSVImagePreviewButton" onclick="CloseDisplayCSVImagePreview()" title='Close image preview'><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+      <img id="DisplayCSVImagePreview" class ="DisplayCSVImagePreview">
+    </div>
+
+    
+    <div id="CSVData" class="CSVData" contenteditable="true" spellcheck="true"></div>
+    <div id="CSVDataTextModify" class="CSVDataTextModify" >
+      <button id = "CloseTextModify" class = "TextModifyButton" onclick="CloseTextModify()" title='Close this window'><img class='img' src='BP Appearance/chevron-circle-down-solid.png' alt='Some png'></button>
+      <button id = "ItalizieText" class = "TextModifyButton" onclick="ItalizieText()" title='Italicize selected text'><img class='img' src='BP Appearance/italic-button.png' alt='Some png'></button>
+      <button id = "BoldText" class = "TextModifyButton" onclick="BoldText()" title='Bold selected text'><img class='img' src='BP Appearance/bold-button.png' alt='Some png'></button>
+      <button id = "UnderlineText" class = "TextModifyButton" onclick="UnderlineText()" title='Underline selected text'><img class='img' src='BP Appearance/underline-button.png' alt='Some png'></button>
+      <button id = "SuperscriptText" class = "TextModifyButton" onclick="SuperscriptText()" title='Superscript selected text'><img class='img' src='BP Appearance/superscript-button.png' alt='Some png'></button>
+      <button id = "SubscriptText" class = "TextModifyButton" onclick="SubscriptText()" title='Subscript selected text'><img class='img' src='BP Appearance/subscript-button.png' alt='Some png'></button>
+      <button id = "PlainText" class = "TextModifyButton" onclick="PlainText()" title='Make selected text plain'><img class='img' src='BP Appearance/plain-button.png' alt='Some png'></button>
+      <button id = "UndoText" class = "TextModifyButton" onclick="UndoLastChangeToText()" title='Undo last change to text'><img class='img' src='BP Appearance/undo-button.png' alt='Some png'></button>
+    </div>
+
+  </div>
+  
+  <!-- Map CSV to BP fields -->
+  <div id="BPFieldMapping" class="BPFieldMapping">
+    <div id = "BPFieldMappingControls" class="BPFieldMappingControls">
+      <div id ="BPFieldMappingDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <div id = "LibraryName" class = "LibraryName">Library Name:&nbsp&nbsp<input type = "text" id = 'SetLibraryName'></div>
+      <button class="RetrieveBPFieldMappingButton" onclick="RetrieveBPMapping()" title='Retrieve a previously saved mapping file'><img class='ActiveButtonImages' src='BP Appearance/Retrieve2.png' alt='Some png'></button>
+      <button class="SaveBPFieldMappingButton" onclick="SaveBPFieldMapping()" title='Download the data mapping template file'><img class='ActiveButtonImages' src='BP Appearance/Save.png' alt='Some png'></button>
+      <button class="SaveBPCSVButton" onclick="SaveBPCSV()" title='Download the mapped and formatted BP-CSV file'><img class='ActiveButtonImages' src='BP Appearance/DownloadCSVFile.png' alt='Some png'></button>
+      <button class="HelpBPFieldMappingButton" onclick="OpenHelp('10.4')" title='Help for data mapping'><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>
+      <button class="ClearBPFieldMappingButton" onclick="ClearAllBPFieldElements()" title='Clear all the mapped fields'><img class='ActiveButtonImages' src='BP Appearance/BinAll.png' alt='Some png'></button>
+      <button class="CloseBPFieldMappingButton" onclick="CloseBPFieldElements()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+    </div>
+    <div id="AvailableBPFieldElements" class="AvailableBPFieldElements"></div>
+  </div>
+  <div id="AvailableCSVFieldElements" class="AvailableCSVFieldElements">
+    <div id = "CSVFieldElementHeader" class="CSVFieldElementHeader"></div>
+  </div>
+  <!--  -->
+
+  <!-- Compose DOC -->
+    <!-- list of elements -->
+  <div id="AvailableCompositionElements" class="AvailableCompositionElements">
+    <div id = "CompositionElementsContnrols" class = "CompositionElementsContnrols">
+      <div id ="AvailableCompositionElementsDrag" title='Drag'><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <button id = "OpenSpecialCharactersButton" class="OpenSpecialCharactersButton" onclick="ToggleSpecialCharacters()" title='Open special characters pad'><img class='ActiveButtonImages' src='BP Appearance/SpecialCharacter.png' alt='Some png'></button>
+      <button id = "ShowMatchingheadersButton" class="ShowMatchingheadersButton" onclick="ShowMatchingheaders()" title='Toggle matching headers'><img class='ActiveButtonImages' src='BP Appearance/CSVFile.png' alt='Some png'></button>
+    </div>
+    <div id ="AvailableCompositionElementsContent" class = "AvailableCompositionElementsContent"></div>
+  </div>
+
+  <!--  -->
+  <!-- Composition board -->
+  <div id="CompositionBoard" class="CompositionBoard">
+    <div id="CompositionBoardControls" class="CompositionBoardControls">
+      <div id ="CompositionBoardDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+      <span id="CompositionBoardTitle" class="CompositionBoardTitle">PDFcomposer</span>
+      <!-- list of paper sizes -->
+      <button id="PaperCompositionBoardButton" class="PaperCompositionBoardButton" onclick="PaperCompositionBoard()" title='Choose Paper size'><img class='ActiveButtonImages' src='BP Appearance/PaperSize.png' alt='Some png'></button>
+      <div id="PaperSizeDropDown" class="PaperSizeDropDown"></div>
+      <div id="PaperForCompositionBoard" class="PaperForCompositionBoard"></div>
+      <!-- paper margins -->
+      <button id="PaperMarginsButton" class="PaperMarginsButton" onclick="PaperMargins()" title='Set Margins'><img class='ActiveButtonImages' src='BP Appearance/Margin.png' alt='Some png'></button>
+      <div id="PaperMarginsDropDown" class="PaperMarginsDropDown"></div>
+      <div id="PaperMargins" class="PaperMargins"></div>
+      <!-- font -->
+      <button id="FontChooseButton" class="FontChooseButton" onclick="FontChoose()" title ='Choose Font Family'><img class='ActiveButtonImages' src='BP Appearance/SearchFont.png' alt='Some png'></button>
+      <div id="FontChooseDropDown" class="FontChooseDropDown"></div>
+      <div id="FontChoose" class="FontChoose"></div>
+      <img id="FontSizeInput" class="FontSizeInput" src='BP Appearance/FontSize.png' alt='Some png'>
+      <input type="number" id="FontSize" class="FontSize" oninput="FontSize(this.value)" title ='Font Size' >
+      <!-- header & footer -->
+      <button id="HeaderFooterButton" class="HeaderFooterButton" onclick="SetHeaderFooter()" title = 'Header/Footer'><img class='HFimg' src='BP Appearance/Header0.png' alt='Some png'></button>
+      <!-- Page numbering -->
+      <button id="PageNumberingButton" class="PageNumberingButton" onclick="SetPageNumbering()" title = 'Set Page Numbering'><img class='ActiveButtonImages' src='BP Appearance/Page Number.png' alt='Some png'></button>
+      <div id="PageNumberChooseDropDown" class="PageNumberChooseDropDown"></div>
+      <div id="PageNumberChoose" class="PageNumberChoose"></div>
+      <!-- snap -->
+      <img id="Snap" class="Snap" src='BP Appearance/Grid.png' alt='Some png'>
+      <input type="number" min="0" max="10" step="0.005" id="SetVertSnap" class="SetVertSnap" oninput="SetVertSnap(this.value)" title = 'Set Vertical Snap'>
+      <input type="number" min="0" max="10" step="0.005" id="SetHorizSnap" class="SetHorizSnap" oninput="SetHorizSnap(this.value)" title = 'Set Horizontal Snap'>
+      <!-- basic functions -->
+      <div id="CompositionBasicFunctions", class = "CompositionBasicFunctions">
+        <button class="RetrieveCompositionBoardButton" onclick="OpenBPCompositionBoard()" title ='Open Saved Composition'><img class='ActiveButtonImages' src='BP Appearance/Retrieve2.png' alt='Some png'></button>
+        <button class="SaveCompositionBoardButton" onclick="SaveCompositionBoard()"><img class='ActiveButtonImages' src='BP Appearance/Save.png' alt='Some png' title ='Save This Composition'></button>
+        <button class="HelpCompositionBoardButton" onclick="OpenHelp('13.3')"><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>
+        <button class="ClearCompositionBoardButton" onclick="RemoveAllElementsFromComposition()"><img class='ActiveButtonImages' src='BP Appearance/BinAll.png' alt='Some png' title = 'Clear'></button>
+        <button class="CloseCompositionBoardButton" onclick="CloseCompositionBoard()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png' title = 'Close'></button>
+      </div>
+    </div>
+    <div id ="CompositionBoardContent" class = "CompositionBoardContent"></div>
+    <canvas id="Canvas" width="150" height="150" style="border:1px solid #d3d3d3;"></canvas>
+    <div id ="SpecialCharactersForOpenFields" class="SpecialCharactersForOpenFields">
+      <div id= "SpecialCharactersForOpenFieldsControl" class="SpecialCharactersForOpenFieldsControl">
+        <div id ="SpecialCharactersForOpenFieldsDrag" class="SpecialCharactersForOpenFieldsControl"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'>
+          Special Characters for Open Fields 
+        </div>
+        <div id="SpecialCharacters" class="SpecialCharacters"></div>
+      </div>
+    </div>
+  </div>
+
+<!--  -->
+<!-- Make BP from .bp.csv file and compressed images -->
+<div id='MakeBPfile' class='MakeBPfile'>
+  <div id="MakeBPfileControls" class="MakeBPfileControls">
+    <div id ="MakeBPfileDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+    <button class="CloseMakeBPfileButton" onclick="CloseMakeBPfile()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+  </div>
+  <div class="SpinnerAndButton"><div id="BPCSVspinner"  class="wait"></div><div id="BPCSVdone"> <img class='FileTypeIcon' src='BP Appearance/Check.png' alt='Some png'></div><button id="UploadBPCSVfile" class="UploadFiles" onclick="UploadBPCSVfile()">Upload a BP CSV File <img class='FileTypeIcon' src='BP Appearance/UploadCSVFile.png' alt='Some png'></button></div>
+  <div class="SpinnerAndButton"><div id="Imagesspinner" class="wait"></div><div id="Imagesdone"><img class='FileTypeIcon' src='BP Appearance/Check.png' alt='Some png'></div><button id="UploadCompressedImageFile" class="UploadFiles" onclick="UploadCompressedImagefile()">Upload a Compressed Images File <img class='FileTypeIcon' src='BP Appearance/UploadImageFile.png' alt='Some png'></button></div>
+  <div class="SpinnerAndButton"><div id="NoImagesspinner" class="wait"></div><div id="NoImagesdone"><img class='FileTypeIcon' src='BP Appearance/Check.png' alt='Some png'></div><button id="NoCompressedImageFile" class="UploadFiles" onclick="NoCompressedImagefile()">No Images in the BP File <img class='FileTypeIcon' src='BP Appearance/NoImages.png' alt='Some png'></button></div>
+  <div class="SpinnerAndButton"><div id="BPspinner"     class="wait"></div><div id="BPdone">    <img class='FileTypeIcon' src='BP Appearance/Check.png' alt='Some png'></div><button id="MakeBP" class="UploadFiles" disabled style="opacity: 0.75; cursor: default;" onclick=" MakeBP()"> Bind, Compress, and Save
+    <img class='FileTypeIcon' src='BP Appearance/CSVFile.png' alt='Some png'>
+    <img id='MakeBPFileImages' class='FileTypeIcon' src='BP Appearance/Images.png' alt='Some png'>
+    <img class='FileTypeIcon' style="transform: scale(0.65)" src='BP Appearance/FindNext.png' alt='Some png'>
+    <img class='FileTypeIcon' src='BP Appearance/SaveBPFile.png' alt='Some png'>
+  </button></div>
+</div>
+
+<!--  -->
+<!-- Make PDF from library -->
+<div id='MakePDFfromLibrary' class='MakePDFfromLibrary'>
+  <div id="MakePDFfromLibraryControls" class="MakePDFfromLibraryControls">
+    <div id ="MakePDFfromLibraryDrag"><img class='MoveImage' src='BP Appearance/Move.png' alt='Some png'></div>
+    <img id="PopulateElementsWithContent" class="PopulateElementsWithContent" src='BP Appearance/PageNumber.png' alt='Some png'>
+    <input type="text" id="ElementNumberForContent" class="ElementNumberForContent" oninput="PopulateCompositionElements(this.value)" title = 'Elements for PDF'>
+    <img id="PopulateElementsWithContent" class="PopulateElementsWithContent" src='BP Appearance/Quality.png' alt='Some png'>
+    <input type="number" min="0" max="1.0" step="0.05" id="QualityForContent" class="QualityForContent" oninput="SetPDFDocQuality(this.value)" title = 'Set PDF Qaulity' >  
+    <button class="CloseBPFieldMappingButton" onclick="CloseMakePDFofLibrary()"><img class='ActiveButtonImages' src='BP Appearance/Close.png' alt='Some png'></button>
+  </div>
+  <button id="MakePDFMultiple" class="MakePDFMultipleButton" onclick=" MakeDOC()">
+    <img class='MakePDFMultiple' src='BP Appearance/BPtoPDF.png' alt='Some png'>
+    <!-- <img class='img' src='BP Appearance/FindNext.png' alt='Some png'> -->
+    <!-- <img class='img' src='BP Appearance/PDFFile.png' alt='Some png'> -->
+  </button>
+  <div id = "MakePDFProgress" class="MakePDFProgress" ></div>            
+</div>
+
+<!--  -->
+<!-- custom dialogues -->
+  <dialog closed id='CustomDialog' class='dialog'>Save the changes to cell data?
+    <button id='MessageButton11' class='dialogbutton' onclick="window.CustomDialog.close(); SaveChangesToCSVFileData();">Yes</button>  
+    <button id='MessageButton12' class='dialogbutton' onclick="window.CustomDialog.close();">No</button>  
+  </dialog> 
+  <dialog closed id='CustomDialog1' class='dialog'>Save the changes to spreadsheet?
+    <button id='MessageButton11' class='dialogbutton' onclick="window.CustomDialog1.close(); SaveCSVfile();">Yes</button>  
+    <button id='MessageButton12' class='dialogbutton' onclick="window.CustomDialog1.close();">No</button>  
+  </dialog>   
+  <dialog closed id='CustomDialog2' class='dialog'>Save Compressed Images?
+    <button id='MessageButton21' class='dialogbutton' onclick="window.CustomDialog2.close(); SaveImageProcessing();">Yes</button>  
+    <button id='MessageButton22' class='dialogbutton' onclick="window.CustomDialog2.close();">No</button>  
+  </dialog>   
+  <dialog closed id='CustomDialog3' class='dialog'>No Image File Names Found in the CSV File
+      <button id='MessageButton31' class='dialogbutton' onclick="window.CustomDialog3.close();">Ok</button>  
+  </dialog>   
+  <dialog closed id='CustomDialog4' class='dialog'>Image File Names Found in the CSV File
+    <button id='MessageButton41' class='dialogbutton' onclick="window.CustomDialog4.close();()=>{ModalDialogReturn='Okay'}">Pick Folder of Images to Search</button>  
+    <button id='MessageButton42' class='dialogbutton' onclick="window.CustomDialog4.close();()=>{ModalDialogReturn='Cancel'};">Cancel</button>  
+  </dialog>     
+
+</body>
+<!--  -->
+<footer>
+  <div id=PlaceMarkers class="PlaceMarkers"></div>
+  <!-- full timespan slider  -->
+  <style data="NavigateWindowSliderWidth" type="text/css"></style>
+  <div id="Navigate" class="Navigate">
+    <input id="NavigateWindowSlider" class="NavigateWindowSlider" type="range" min="0" max="100" value="0" step=".05" oninput=NavigateWindow(this.value) onchange=NavigateWindow(this.value)>
+  </div>
+  <!-- utilities  -->
+  <div id="Utilities" class="Utilities">
+    <button type=button id="ShowBookmakrs" class="ShowBookmarks" onclick="ShowBookmarks()"  title='View & Manage Bookmarks'><img class='ActiveButtonImages' src='BP Appearance/BookmarkFull.png' alt='Some png'></button>
+    <div id="BookmarkSeeker" class="BookmarkSeeker">
+      <button type=button disabled id="BookmarkSeekBackward" class="BookmarkSeekBackward" onclick="SeekPreviousBookmark()"><img class='BookmarkSeekBackwardButtonImage' src='BP Appearance/FindPrevious.png' alt='Some png'></button>
+      <div title='Seek a Bookmark'><img id="BookmarkSeek" title='Move to Bookmarked Item' class="BookmarkSeek" src="BP Appearance/BookmarkFull.png" alt="NotFound"></div>
+      <button type=button disabled id="BookmarkSeekForward" class="BookmarkSeekForward" onclick="SeekNextBookmark()"><img class='BookmarkSeekForwardButtonImage' src='BP Appearance/FindNext.png' alt='Some png'></button>
+    </div>
+    <button type=button id="Search" class="Search" onclick="ShowSearchManagement()" title='Open Search Window'><img class='ActiveButtonImages' src='BP Appearance/Lesson.png' alt='Some png'></button>
+    <button type=button id="Filter" class="Filter" onclick="ShowFilterManagement()" title='Open Filter Window'><img class='ActiveButtonImages' src='BP Appearance/Filter.png' alt='Some png'></button>
+    <div id="UserAssist" class="UserAssist"></div>
+    <!-- <button type=button id="ShowGeneralDocumentation" class="ShowGeneralDocumentation" onclick="LoadGeneralDocumentation()" title='Help & Documentation'></button> -->
+    <button type=button id="ShowGeneralDocumentation" class="ShowGeneralDocumentation" onclick="LoadGeneralDocumentation()" title='Help & Documentation'><img class='ActiveButtonImages' src='BP Appearance/Help.png' alt='Some png'></button>
+    <button type=button id="GeneralSettingsButton"    class="GeneralSettingsButton"    onclick="LoadSettingsWindow()"       title='Settings: Fonts, Styles, & Colors'><img class='ActiveButtonImages' src='BP Appearance/Settings.png' alt='Some png'></button>
+  </div>
+</footer>
+
+<!-- code for UI -->
+<script src="Libraries/JS Libraries/BookPageant.js"></script>
+<!-- code for CSV parser -->
+<script src="Libraries/JS Libraries/papaparse.min.js"></script>
+<!-- code for mouse scroll dragging -->
+<script type="text/javascript" src="Libraries/JS Libraries/dragscroll.js"></script>
+<!-- code for compression/decompression -->
+<script src="Libraries/JS Libraries/lz-string.min.js"></script>
+<!-- code for downloading -->
+<script src="Libraries/JS Libraries/download.js"></script>
+<!-- code for PDF generation -->
+<script src="Libraries/JS Libraries/jspdf.debug.js"></script>
+<!-- code for ZIP file generation  -->
+<script src="Libraries/JS Libraries/jszip.min.js"></script>
+<!-- compressing entry jpegs -->
+<script src="Libraries/JS Libraries/compressor.js"></script>
+<!-- progress bar code -->
+<script src="Libraries/JS Libraries/circle-progress.js"></script>
+<!-- color picker code -->
+<script src="Libraries/JS Libraries/huebee.pkgd.min.js"></script>
+<!-- wheel zoom & drag code -->
+<script src="Libraries/JS Libraries/wheelzoom.js"></script>
+<!-- alert window substitute -->
+<script src="Libraries/JS Libraries/daypilot-modal-2.9.js"></script>
+<!-- spreadsheet -->
+<script src="Libraries/JS Libraries/datagridxl2.js"></script>
+<!-- maps  -->
+<script src="Libraries/JS Libraries/leaflet.js"></script>
+<!-- local storage  -->
+<script src="Libraries/JS Libraries/localforage.min.js"></script>
+
+<!-- add fonts -->
+<script src="Libraries/JS Libraries/TimesRoman.js" ></script>
+<script src="Libraries/JS Libraries/Symbola_hint-normal.js" ></script>
+<script src="Libraries/JS Libraries/Scala.js" ></script>
+<script src="Libraries/JS Libraries/Helvetica.js" ></script>
+<script src="Libraries/JS Libraries/LatinModernMath-normal.js" ></script>
+<script src="Libraries/JS Libraries/Centaur.js" ></script>
+<script src="Libraries/JS Libraries/Collation-normal.js" ></script>
+<script src="Libraries/JS Libraries/Cambria.js" ></script>
+<script src="Libraries/JS Libraries/BookmanOldStyle.js" ></script>
+<script src="Libraries/JS Libraries/Baskerville.js" ></script>
+<script src="Libraries/JS Libraries/Arial Narrow.js" ></script>
+<script src="Libraries/JS Libraries/Arial.js" ></script>
+
+
+</html>
